@@ -33,23 +33,8 @@ public class HttpSecurityConfig {
                 .sessionManagement( sessionMangConfig -> sessionMangConfig.sessionCreationPolicy(SessionCreationPolicy.STATELESS) )
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
-//                .authorizeHttpRequests(builderRequestMatchers())
         ;
 
         return http.build();
     }
-
-//    private static Customizer<AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry> builderRequestMatchers() {
-//        return authConfig -> {
-//
-//            authConfig.requestMatchers(HttpMethod.POST, "/auth/authenticate").permitAll();
-//            authConfig.requestMatchers(HttpMethod.GET, "/auth/public-access").permitAll();
-//            authConfig.requestMatchers("/error").permitAll();
-//
-//            authConfig.requestMatchers(HttpMethod.GET, "/products").hasAuthority(Permission.READ_ALL_PRODUCTS.name());
-//            authConfig.requestMatchers(HttpMethod.POST, "/products").hasAuthority(Permission.SAVE_ONE_PRODUCT.name());
-//
-//            authConfig.anyRequest().denyAll();
-//        };
-//    }
 }

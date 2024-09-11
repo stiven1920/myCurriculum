@@ -2,7 +2,6 @@ package com.example.Curriculum.services.jwt;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,47 +11,42 @@ import org.springframework.stereotype.Service;
 import com.example.Curriculum.dto.AuthenticationRequest;
 import com.example.Curriculum.dto.AuthenticationResponse;
 import com.example.Curriculum.models.Usuario;
-import com.example.Curriculum.services.UsuarioServices;
+import com.example.Curriculum.repository.UsuarioDao;
 
 @Service
 public class AuthenticationService {
-	@Autowired
-	private AuthenticationManager authenticationManager;
 
-	@Autowired
-	private UsuarioServices userServices;
+    @Autowired
+    private AuthenticationManager authenticationManager;
 
-	@Autowired
-	private JwtService jwtService;
+    @Autowired
+    private UsuarioDao userRepository;
 
-	public AuthenticationResponse login(AuthenticationRequest authRequest) {
+    @Autowired
+    private JwtService jwtService;
 
-		// Crea el token de autenticación con el nombre de usuario y contraseña
-		UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-				authRequest.getUsername(), authRequest.getPassword());
+    public AuthenticationResponse login(AuthenticationRequest authRequest) {
 
-		// Autentica el token usando el AuthenticationManager
-		authenticationManager.authenticate(authToken);
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                authRequest.getUsername(), authRequest.getPassword()
+        );
 
-		// Recupera el usuario de la base de datos
-		Optional<Usuario> optionalUser = userServices.findUserName(authRequest.getUsername());
-		Usuario user = optionalUser.get();
+        authenticationManager.authenticate(authToken);
 
-		// Genera el token JWT
-		String jwt = jwtService.generateToken(user, generateExtraClaims(user));
+        Usuario user = userRepository.findByUsername(authRequest.getUsername()).get();
 
-		// Devuelve una respuesta con el token y el usuario
-		return new AuthenticationResponse(jwt, user);
+        String jwt = jwtService.generateToken(user, generateExtraClaims(user));
 
-	}
+        return new AuthenticationResponse(jwt);
+    }
 
-	private Map<String, Object> generateExtraClaims(Usuario user) {
+    private Map<String, Object> generateExtraClaims(Usuario user) {
 
-		Map<String, Object> extraClaims = new HashMap<>();
-		extraClaims.put("name", user.getNombre());
-		extraClaims.put("role", user.getRole().name());
-		extraClaims.put("permissions", user.getRole());
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("name", user.getNombre());
+        extraClaims.put("role", user.getRole().name());
+        extraClaims.put("permissions", user.getAuthorities());
 
-		return extraClaims;
-	}
+        return extraClaims;
+    }
 }
