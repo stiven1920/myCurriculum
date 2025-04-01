@@ -16,7 +16,7 @@ import com.example.Curriculum.config.security.filter.JwtAuthenticationFilter;
 
 @Component
 @EnableWebSecurity
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class HttpSecurityConfig {
 
     @Autowired

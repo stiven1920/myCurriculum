@@ -48,8 +48,9 @@ public class Usuario implements UserDetails {
     private String telefono;
     @NotBlank
     private String username;
-    @NotBlank
+  
     private String password;
+    
     @Enumerated(EnumType.STRING)
     private Role role;
     

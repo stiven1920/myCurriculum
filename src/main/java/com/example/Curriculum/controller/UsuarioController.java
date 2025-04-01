@@ -43,43 +43,41 @@ public class UsuarioController {
 	@PreAuthorize("permitAll")
 	@PostMapping(path = "/saveUser", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Object> saveUser(
-	        @RequestHeader(value = HttpHeaders.CONTENT_TYPE, defaultValue = "") String contentType,
-	        @RequestBody @Valid Usuario user) {
-	    
-	    if (!MediaType.APPLICATION_JSON_VALUE.equals(contentType)) {
-	        Map<String, Object> response = new HashMap<>();
-	        response.put("error", "El encabezado 'Content-Type' debe ser 'application/json'");
-	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-	    }
+			@RequestHeader(value = HttpHeaders.CONTENT_TYPE, defaultValue = "") String contentType,
+			@RequestBody @Valid Usuario user) {
 
-	    Map<String, Object> response = new HashMap<>();
-	    try {
-	        
-	        Optional<Usuario> existingUserByDni = userServices.getUserByDni(user.getCedula());
-	        if (existingUserByDni.isPresent()) {
-	            response.put("message", "Usuario ya existe con esta Cédula: " + user.getCedula());
-	            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-	        }
-	        
-	        Optional<Usuario> existingUserByUsername = userServices.findUserName(user.getUsername());
-	        if (existingUserByUsername.isPresent()) {
-	            response.put("message", "Este Usuario " + user.getUsername() + " ya existe. Por favor elige otro.");
-	            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-	        }	        
+		if (!MediaType.APPLICATION_JSON_VALUE.equals(contentType)) {
+			Map<String, Object> response = new HashMap<>();
+			response.put("error", "El encabezado 'Content-Type' debe ser 'application/json'");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+		}
 
-	        String encodedPassword = passwordEncoder.encode(user.getPassword());
-	        user.setPassword(encodedPassword);
-	        Usuario addedUser = userServices.saveUser(user);
-	        response.put("new_user", addedUser);
-	        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+		Map<String, Object> response = new HashMap<>();
+		try {
 
-	    } catch (Exception e) {
-	        response.put("message", e.getMessage());
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-	    }
+			Optional<Usuario> existingUserByDni = userServices.getUserByDni(user.getCedula());
+			if (existingUserByDni.isPresent()) {
+				response.put("message", "Usuario ya existe con esta Cédula: " + user.getCedula());
+				return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+			}
+
+			Optional<Usuario> existingUserByUsername = userServices.findUserName(user.getUsername());
+			if (existingUserByUsername.isPresent()) {
+				response.put("message", "Este Usuario " + user.getUsername() + " ya existe. Por favor elige otro.");
+				return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+			}
+
+			String encodedPassword = passwordEncoder.encode(user.getPassword());
+			user.setPassword(encodedPassword);
+			Usuario addedUser = userServices.saveUser(user);
+			response.put("new_user", addedUser);
+			return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+		} catch (Exception e) {
+			response.put("message", e.getMessage());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+		}
 	}
-
-
 
 	@PreAuthorize("hasAuthority('READ_ADMINISTRATOR') or hasAuthority('READ_CUSTOMER')")
 	@GetMapping(path = "/getUserBy")
@@ -89,11 +87,11 @@ public class UsuarioController {
 			Usuario user = userEncontrado.get();
 			if (userEncontrado.isPresent()) {
 				Usuario usuario = new Usuario();
+				usuario.setCedula(user.getCedula());
 				usuario.setNombre(user.getNombre());
 				usuario.setApellido(user.getApellido());
 				usuario.setUsername(user.getUsername());
-				usuario.setRole(user.getRole());
-
+				usuario.setTelefono(user.getTelefono());
 				return new ResponseEntity<>(usuario, HttpStatus.OK);
 			} else {
 				return new ResponseEntity<>("No se encontró el usuario con cédula: " + cedula, HttpStatus.NOT_FOUND);
@@ -106,24 +104,29 @@ public class UsuarioController {
 
 	@PreAuthorize("hasAuthority('SAVE_ADMINISTRATOR') or hasAuthority('SAVE_CUSTOMER')")
 	@PutMapping(path = "/updateUser")
-	public ResponseEntity<Object> updateUser(@RequestParam BigInteger cedula, @RequestBody Usuario user) {
+	public ResponseEntity<Object> updateUser(@RequestBody @Valid Usuario user) {
 		Map<String, Object> map = new HashMap<>();
 		try {
-			Optional<Usuario> userEncontrado = userServices.getUserByDni(cedula);
+			Optional<Usuario> userEncontrado = userServices.getUserByDni(user.getCedula());
 			if (userEncontrado.isPresent()) {
 				Usuario userUpdate = userEncontrado.get();
-				String encodedPassword = passwordEncoder.encode(user.getPassword());
-				userUpdate.setNombre(encodedPassword);
+				userUpdate.setNombre(user.getNombre());
 				userUpdate.setApellido(user.getApellido());
 				userUpdate.setTelefono(user.getTelefono());
 				userUpdate.setUsername(user.getUsername());
-				userUpdate.setPassword(encodedPassword);
+
+				if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+					String encodedPassword = passwordEncoder.encode(user.getPassword());
+					userUpdate.setPassword(encodedPassword);
+				}
+
 				userServices.saveUser(userUpdate);
 				map.put("Update User", userUpdate);
 				return ResponseEntity.status(HttpStatus.OK).body(map);
 			} else {
-				return ResponseEntity.status(HttpStatus.NOT_FOUND)
-						.body("No se encontró el usuario con cedula: " + cedula);
+
+				map.put("Warning", "No se encontró el usuario con cedula: " + user.getCedula());
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(map);
 			}
 		} catch (Exception e) {
 			map.put("error", "Error al actualizar el usuario");

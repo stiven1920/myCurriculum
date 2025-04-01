@@ -50,12 +50,12 @@ public class InformacionContactoController {
 			SimpleMailMessage message = new SimpleMailMessage();
 			message.setTo(emailTo);
 			message.setSubject("Mi Nombre es " + infoCont.getNombre() + " y quiero contactar contigo");
-			message.setText(infoCont.getMensaje() + " el correo con que te quiero contacta es: " + infoCont.getCorreo());
+			message.setText(infoCont.getMensaje() + " el correo con que te quiero contactar es: " + infoCont.getCorreo());
 			javaSender.send(message);
 			InformacionContacto infoSave = infoContServices.saveContato(infoCont);
 
 			Map<String, Object> successResponse = new HashMap<>();
-			successResponse.put("message", "Fue mensaje Fue enviado");
+			successResponse.put("message", "Mensaje enviado con Exito");
 			successResponse.put("data", infoSave);
 			return ResponseEntity.status(HttpStatus.CREATED).body(successResponse);
 

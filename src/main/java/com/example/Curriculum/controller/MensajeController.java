@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,8 +42,7 @@ public class MensajeController {
 	@Autowired
 	private UsuarioServices userServices;
 
-	// @PreAuthorize("hasAuthority('SAVE_ADMINISTRATOR')and
-	// hasAuthority('SAVE_CUSTOMER')")
+	@PreAuthorize("hasAuthority('READ_ADMINISTRATOR')")
 	@PostMapping(path = "/saveMessage", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Object> saveMensaje(
 			@RequestHeader(value = HttpHeaders.CONTENT_TYPE, defaultValue = "") String contentType,
@@ -77,6 +77,7 @@ public class MensajeController {
 		}
 	}
 
+	@PreAuthorize("hasAuthority('READ_ADMINISTRATOR') or hasAuthority('READ_CUSTOMER')")
 	@GetMapping("getAllMessage")
 	public ResponseEntity<Object> getAllUser() {
 		try {
@@ -106,6 +107,7 @@ public class MensajeController {
 		}
 	}
 
+	@PreAuthorize("hasAuthority('READ_ADMINISTRATOR')")
 	@GetMapping("getMessageByDni")
 	public ResponseEntity<Object> getAllUser(@RequestParam BigInteger cedula) {
 		try {

@@ -38,47 +38,50 @@ public class AuthenticationController {
 
 	@PostMapping("/authenticate")
 	public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid AuthenticationRequest authRequest) {
-		Map<String, Object> response = new HashMap<>();
-		Map<String, Object> userMap = new HashMap<>();
+	    Map<String, Object> response = new HashMap<>();
+	    Map<String, Object> userMap = new HashMap<>();
 
-		try {
-			AuthenticationResponse jwtResponse = authenticationService.login(authRequest);
-			Optional<Usuario> userAuth = userServices.findUserName(authRequest.getUsername());
+	    try {
+	        AuthenticationResponse jwtResponse = authenticationService.login(authRequest);
+	        Optional<Usuario> userAuth = userServices.findUserName(authRequest.getUsername());
 
-			if (userAuth.isPresent() && userAuth.get().getUsername().equals(authRequest.getUsername())) {
-				Usuario user = userAuth.get();
+	        if (userAuth.isPresent()) {
+	            Usuario user = userAuth.get();
+	            if (user.getUsername().equals(authRequest.getUsername())) {
+	                response.put("token", jwtResponse.getJwt());
+	                response.put("status", HttpStatus.OK);
+	                
+	                userMap.put("nombre", user.getNombre());
+	                userMap.put("identificacion", user.getCedula());
+	                userMap.put("apellido", user.getApellido());
+	                userMap.put("username", user.getUsername());
+	                userMap.put("role", user.getRole());
+	                userMap.put("accountNonExpired", user.isAccountNonExpired());
+	                userMap.put("credentialsNonExpired", user.isCredentialsNonExpired());
+	                userMap.put("enabled", user.isEnabled());
 
-				response.put("token", jwtResponse.getJwt());
-				response.put("status",HttpStatus.OK);
-				response.put("usuario", userMap);
+	                response.put("usuario", userMap);
+	                return ResponseEntity.ok(response);
+	            }
+	        }
 
-				userMap.put("nombre", user.getNombre());
-				userMap.put("apellido", user.getApellido());
-				userMap.put("username", user.getUsername());
-				userMap.put("role", user.getRole());
-				userMap.put("accountNonExpired", user.isAccountNonExpired());
-				userMap.put("credentialsNonExpired", user.isCredentialsNonExpired());
-				userMap.put("enabled", user.isEnabled());
+	        response.put("message", "Usuario o contraseña invalidos");
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
 
-				return ResponseEntity.ok(response);
-			} else {
-				response.put("message", "Usuario o contrasena invalidos");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-			}
+	    } catch (InvalidCredentialsException e) {
+	        response.put("message", "Credenciales invalidas");
+	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
 
-		} catch (InvalidCredentialsException e) {
-			response.put("message", "Credenciales inválidas");
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+	    } catch (UserNotFoundException e) {
+	        response.put("message", "Usuario no encontrado");
+	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
 
-		} catch (UserNotFoundException e) {
-			response.put("message", "Usuario no encontrado");
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-
-		} catch (Exception e) {
-			response.put("message", "Ha ocurrido un problema con el servicio");
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-		}
+	    } catch (Exception e) {
+	        response.put("message", "Ha ocurrido un problema con el servicio");
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+	    }
 	}
+
 
 	/**
 	 * Maneja las excepciones de autenticación.
